@@ -1,0 +1,8 @@
+{
+  "name": "snotation-nodejs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "undefined7887",
+  "license": "MIT",
+  "dependencies": {}
+}
