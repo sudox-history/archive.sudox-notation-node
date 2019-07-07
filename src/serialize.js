@@ -36,7 +36,7 @@ function serialize(obj, offset = 0, bufLen = _BUF_LEN) {
     }
 
     let buf = Buffer.alloc(_index);
-    _buf.copy(buf, offset);
+    _buf.copy(buf);
 
     return  buf;
 }
