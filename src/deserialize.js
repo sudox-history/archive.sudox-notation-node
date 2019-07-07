@@ -1,5 +1,5 @@
 "use strict";
-const types = require("./constants/types");
+const consts = require("./consts");
 
 const _UTF8 = "utf8";
 
@@ -14,17 +14,17 @@ let _index = 0;
  * @param {Number} offset = 0
  * @returns {Boolean | Array | Object}
  */
-function deserialize(buf, offset) {
+function deserialize(buf, offset = 0) {
     _index = offset;
     _buf = buf;
 
     let type = _buf[_index++];
 
     switch (type) {
-        case types.ARR:
+        case consts.ARR_TYPE:
             return _readArr();
 
-        case types.OBJ:
+        case consts.OBJ_TYPE:
             return _readObj();
     }
 
@@ -44,7 +44,9 @@ function _readBool() {
  * @returns {Number}
  */
 function _readNum() {
-    let numLen = _buf[_index++];
+    let numLen = _buf.readUIntLE(_index, consts.NUM_HEAD_LEN);
+
+    _index += consts.NUM_HEAD_LEN;
     let num = _buf.readIntLE(_index, numLen);
 
     _index += numLen;
@@ -55,9 +57,9 @@ function _readNum() {
  * @returns {String}
  */
 function _readStr() {
-    let strLen = _buf.readUIntLE(_index, types.STR_HEAD_LEN);
+    let strLen = _buf.readUIntLE(_index, consts.STR_HEAD_LEN);
 
-    _index += types.STR_HEAD_LEN;
+    _index += consts.STR_HEAD_LEN;
     return _buf.toString(_UTF8, _index, _index += strLen);
 }
 
@@ -65,9 +67,9 @@ function _readStr() {
  * @returns {Buffer}
  */
 function _readBuf() {
-    let bufLen = _buf.readUIntLE(_index, types.BUF_HEAD_LEN);
+    let bufLen = _buf.readUIntLE(_index, consts.BUF_HEAD_LEN);
 
-    _index += types.BUF_HEAD_LEN;
+    _index += consts.BUF_HEAD_LEN;
     return _buf.slice(_index, _index += bufLen);
 }
 
@@ -75,36 +77,36 @@ function _readBuf() {
  * @returns {Array}
  */
 function _readArr() {
-    let arrLen = _buf.readUIntLE(_index, types.ARR_HEAD_LEN);
+    let arrLen = _buf.readUIntLE(_index, consts.ARR_HEAD_LEN);
     let arr = [];
 
-    _index += types.ARR_HEAD_LEN;
+    _index += consts.ARR_HEAD_LEN;
 
     for (let i = 0; i < arrLen; i++) {
         let type = _buf[_index++];
 
         switch (type) {
-            case types.BOOL:
+            case consts.BOOL_TYPE:
                 arr.push(_readBool());
                 break;
 
-            case types.NUM:
+            case consts.NUM_TYPE:
                 arr.push(_readNum());
                 break;
 
-            case types.STR:
+            case consts.STR_TYPE:
                 arr.push(_readStr());
                 break;
 
-            case types.BUF:
+            case consts.BUF_TYPE:
                 arr.push(_readBuf());
                 break;
 
-            case types.ARR:
+            case consts.ARR_TYPE:
                 arr.push(_readArr());
                 break;
 
-            case types.OBJ:
+            case consts.OBJ_TYPE:
                 arr.push(_readObj());
                 break;
         }
@@ -117,41 +119,41 @@ function _readArr() {
  * @returns {Object}
  */
 function _readObj() {
-    let objLen = _buf.readUIntLE(_index, types.OBJ_HEAD_LEN);
+    let objLen = _buf.readUIntLE(_index, consts.OBJ_HEAD_LEN);
     let obj = {};
 
-    _index += types.OBJ_HEAD_LEN;
+    _index += consts.OBJ_HEAD_LEN;
 
     for (let i = 0; i < objLen; i++) {
-        let keyLen = _buf.readUIntLE(_index, types.OBJ_KEY_HEAD_LEN);
+        let keyLen = _buf.readUIntLE(_index, consts.OBJ_KEY_HEAD_LEN);
 
-        _index += types.OBJ_KEY_HEAD_LEN;
+        _index += consts.OBJ_KEY_HEAD_LEN;
         let key = _buf.toString(_UTF8, _index, _index += keyLen);
 
         let type = _buf[_index++];
 
         switch (type) {
-            case types.BOOL:
+            case consts.BOOL_TYPE:
                 obj[key] = _readBool();
                 break;
 
-            case types.NUM:
+            case consts.NUM_TYPE:
                 obj[key] = _readNum();
                 break;
 
-            case types.STR:
+            case consts.STR_TYPE:
                 obj[key] = _readStr();
                 break;
 
-            case types.BUF:
+            case consts.BUF_TYPE:
                 obj[key] = _readBuf();
                 break;
 
-            case types.ARR:
+            case consts.ARR_TYPE:
                 obj[key] = _readArr();
                 break;
 
-            case types.OBJ:
+            case consts.OBJ_TYPE:
                 obj[key] = _readObj();
                 break;
         }

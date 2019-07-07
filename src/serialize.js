@@ -1,5 +1,5 @@
 "use strict";
-const types = require("./constants/types");
+const consts = require("./consts");
 
 const _BUF_LEN = 16777215;
 
@@ -46,7 +46,7 @@ function serialize(obj, offset = 0, bufLen = _BUF_LEN) {
  * @returns {Boolean}
  */
 function _writeBool(bool) {
-    _buf[_index++] = types.BOOL;
+    _buf[_index++] = consts.BOOL_TYPE;
 
     _buf[_index++] = +bool;
     return true;
@@ -57,7 +57,7 @@ function _writeBool(bool) {
  * @returns {Boolean}
  */
 function _writeNum(num) {
-    _buf[_index++] = types.NUM;
+    _buf[_index++] = consts.NUM_TYPE;
 
     let numLen = 0;
 
@@ -69,7 +69,7 @@ function _writeNum(num) {
         numLen = 1;
     }
 
-    _buf[_index++] = numLen;
+    _index = _buf.writeUIntLE(numLen, _index, consts.NUM_HEAD_LEN);
     _index = _buf.writeIntLE(num, _index, numLen);
 
     return true;
@@ -80,13 +80,13 @@ function _writeNum(num) {
  * @returns {Boolean}
  */
 function _writeStr(str) {
-    _buf[_index++] = types.STR;
+    _buf[_index++] = consts.STR_TYPE;
 
     let strHeadIndex = _index;
-    let strLen = _buf.write(str, _index += types.STR_HEAD_LEN);
+    let strLen = _buf.write(str, _index += consts.STR_HEAD_LEN);
 
     _index += strLen;
-    _buf.writeUIntLE(strLen, strHeadIndex, types.STR_HEAD_LEN);
+    _buf.writeUIntLE(strLen, strHeadIndex, consts.STR_HEAD_LEN);
 
     return true;
 }
@@ -96,9 +96,9 @@ function _writeStr(str) {
  * @returns {Boolean}
  */
 function _writeBuf(buf) {
-    _buf[_index++] = types.BUF;
+    _buf[_index++] = consts.BUF_TYPE;
 
-    _index = _buf.writeUIntLE(buf.length, _index, types.BUF_HEAD_LEN);
+    _index = _buf.writeUIntLE(buf.length, _index, consts.BUF_HEAD_LEN);
     _index += buf.copy(_buf, _index);
 
     return true;
@@ -109,10 +109,10 @@ function _writeBuf(buf) {
  * @returns {Boolean}
  */
 function _writeArr(arr) {
-    _buf[_index++] = types.ARR;
+    _buf[_index++] = consts.ARR_TYPE;
 
     let arrLen = arr.length;
-    _index = _buf.writeUIntLE(arrLen, _index, types.ARR_HEAD_LEN);
+    _index = _buf.writeUIntLE(arrLen, _index, consts.ARR_HEAD_LEN);
 
     for (let i = 0; i < arrLen; i++) {
         if (arr[i] === null) {
@@ -156,12 +156,12 @@ function _writeArr(arr) {
  * @returns {Boolean}
  */
 function _writeObj(obj) {
-    _buf[_index++] = types.OBJ;
+    _buf[_index++] = consts.OBJ_TYPE;
 
     let objHeadIndex = _index;
     let objLen = 0;
 
-    _index += types.OBJ_HEAD_LEN;
+    _index += consts.OBJ_HEAD_LEN;
 
     for (let key in obj) {
         if (obj[key] === null) {
@@ -169,10 +169,10 @@ function _writeObj(obj) {
         }
 
         let keyHeadIndex = _index;
-        let keyLen = _buf.write(key, _index += types.OBJ_KEY_HEAD_LEN);
+        let keyLen = _buf.write(key, _index += consts.OBJ_KEY_HEAD_LEN);
 
         _index += keyLen;
-        _buf.writeUIntLE(keyLen, keyHeadIndex, types.OBJ_KEY_HEAD_LEN);
+        _buf.writeUIntLE(keyLen, keyHeadIndex, consts.OBJ_KEY_HEAD_LEN);
 
         switch (typeof obj[key]) {
             case "boolean":
@@ -205,7 +205,7 @@ function _writeObj(obj) {
         objLen++;
     }
 
-    _buf.writeUIntLE(objLen, objHeadIndex, types.OBJ_HEAD_LEN);
+    _buf.writeUIntLE(objLen, objHeadIndex, consts.OBJ_HEAD_LEN);
     return true;
 }
 
